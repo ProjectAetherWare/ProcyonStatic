@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Procyon Overhaul</title>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent:#ffffff;
+  --bg:#010103;
+  --panel:rgba(255,255,255,0.03);
+  --panel2:rgba(255,255,255,0.02);
+  --text:#ffffff;
+  --muted:rgba(255,255,255,0.6);
+  --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'Fira Code',monospace;background:var(--bg);color:var(--text);cursor:url(cursor.png),auto;}
+body{display:flex;flex-direction:column;overflow:hidden;}
+header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);backdrop-filter:blur(10px);}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo img{height:50px;width:50px;border-radius:8px;object-fit:cover;}
+.site-title{font-weight:700;font-size:20px;color:var(--accent);}
+main{display:flex;flex:1;gap:12px;padding:12px;overflow:hidden;}
+.sidebar{width:280px;padding:14px;border-radius:var(--radius);background:linear-gradient(180deg,var(--panel),var(--panel2));backdrop-filter:blur(12px);overflow-y:auto;}
+.section-title{font-weight:700;margin-bottom:6px;color:var(--accent);}
+.small{font-size:13px;color:var(--accent);}
+.tab-item{padding:8px 12px;border-radius:12px;cursor:pointer;color:var(--muted);margin-bottom:4px;}
+.tab-item.active{color:var(--accent);outline:3px solid rgba(255,255,255,0.06);outline-offset:4px;}
+.content{flex:1;padding:8px;display:flex;flex-direction:column;overflow:auto;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
+.card{padding:10px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);cursor:pointer;display:flex;flex-direction:column;align-items:center;transition:transform 0.2s;}
+.card:hover{transform:scale(1.05);}
+.card img{width:100%;height:100px;object-fit:cover;border-radius:6px;}
+.card-title{font-weight:700;margin-top:6px;text-align:center;color:var(--accent);}
+#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;}
+#gameLayer{position:fixed;inset:0;z-index:50;display:none;flex-direction:column;background:linear-gradient(180deg,rgba(0,0,0,0.6),rgba(0,0,0,0.85));}
+.game-topbar{display:flex;align-items:center;gap:8px;padding:12px;background:transparent;}
+.game-titlebar{font-weight:700;color:var(--accent);}
+.game-iframe-wrap{flex:1;display:flex;align-items:stretch;justify-content:center;padding:8px;}
+.game-iframe{width:100%;height:100%;border:0;background:#000;border-radius:12px;}
+input,select{padding:6px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--accent);}
+.btn{padding:8px 12px;border-radius:12px;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--accent);transition:0.2s;}
+.btn:hover{background:rgba(255,255,255,0.05);}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+<header>
+  <div class="logo">
+    <img src="logo.png" alt="logo">
+    <div>
+      <div class="site-title">Procyon</div>
+      <div class="small" id="homeWelcome">Welcome!</div>
+    </div>
+  </div>
+</header>
+<main>
+<aside class="sidebar">
+  <div class="section-title">Menu</div>
+  <div class="tab-item active" data-tab="home">Home</div>
+  <div class="tab-item" data-tab="games">Games</div>
+  <div class="tab-item" data-tab="library">Library</div>
+  <div class="tab-item" data-tab="favorites">Favorites</div>
+  <div class="tab-item" data-tab="settings">Settings</div>
+  <div style="height:12px;"></div>
+  <div class="section-title">Recent Games</div>
+  <div id="recentList"></div>
+  <div style="height:12px;"></div>
+  <div class="section-title">Time</div>
+  <div id="timeDisplay" class="small"></div>
+</aside>
+<section class="content">
+  <div id="homeView">
+    <div style="text-align:center;margin-bottom:12px;">
+      <img src="logo.png" style="height:80px;">
+      <h1 style="color:var(--accent)">Welcome to Procyon</h1>
+    </div>
+  </div>
+  <div id="gamesView" style="display:none">
+    <div class="section-title">All Games</div>
+    <div id="gamesGrid" class="grid"></div>
+  </div>
+  <div id="libraryView" style="display:none">
+    <div class="section-title">Library</div>
+    <div class="small">Assets go in /library folder. Useful links can be included in files.</div>
+  </div>
+  <div id="favoritesView" style="display:none">
+    <div class="section-title">Favorites</div>
+    <div id="favGrid" class="grid"></div>
+  </div>
+  <div id="settingsView" style="display:none">
+    <div class="section-title">Settings</div>
+    <div class="small">Accent Color</div>
+    <input type="color" id="accentPicker" value="#ffffff">
+    <div class="small" style="margin-top:8px">Theme</div>
+    <select id="themeSelect" style="width:100%;margin-top:4px;">
+      <option value="aesthetic">Full Aesthetic</option>
+      <option value="dark">Dark</option>
+      <option value="light">Light</option>
+      <option value="blue">Blue</option>
+      <option value="green">Green</option>
+      <option value="red">Red</option>
+      <option value="purple">Purple</option>
+      <option value="orange">Orange</option>
+    </select>
+    <div style="margin-top:12px;display:flex;gap:8px;">
+      <button class="btn" id="exportBtn">Export Data</button>
+      <label class="btn" for="importInput">Import</label>
+      <input type="file" id="importInput" style="display:none">
+    </div>
+    <div style="margin-top:12px;">
+      <input type="checkbox" id="perfMode"> <label class="small">Performance Mode</label>
+    </div>
+  </div>
+</section>
+</main>
+
+<div id="gameLayer">
+  <div class="game-topbar">
+    <div class="game-titlebar" id="playingTitle">Playing — </div>
+    <div style="flex:1"></div>
+    <button class="btn" id="closeGame">Exit</button>
+  </div>
+  <div class="game-iframe-wrap">
+    <iframe id="gameIframe" class="game-iframe"></iframe>
+  </div>
+</div>
+
+<script>
+/* ===== STATE MANAGEMENT ===== */
+let state={accent:'#ffffff',theme:'aesthetic',recent:[],favorites:[],achievements:{},perf:false};
+try{state=JSON.parse(localStorage.getItem('procyon_v3'))||state;}catch(e){}
+function saveState(){localStorage.setItem('procyon_v3',JSON.stringify(state)); applyAccent(); applyTheme();}
+function applyAccent(){document.documentElement.style.setProperty('--accent',state.accent); document.querySelectorAll('.small,.card-title,.tab-item,.section-title,.site-title').forEach(el=>el.style.color=state.accent);}
+function applyTheme(){let bg='#fff'; switch(state.theme){case'aesthetic':bg='#010103';break;case'dark':bg='#010103';break;case'light':bg='#f5f5f5';break;case'blue':bg='#0f1c30';break;case'green':bg='#102a10';break;case'red':bg='#301010';break;case'purple':bg='#201030';break;case'orange':bg='#302010';break;} document.body.style.background=bg;}
+applyAccent(); applyTheme();
+
+/* ===== TABS ===== */
+const tabItems=document.querySelectorAll('.tab-item');
+tabItems.forEach(t=>t.addEventListener('click',()=>{tabItems.forEach(x=>x.classList.remove('active')); t.classList.add('active'); switchTab(t.dataset.tab);}));
+function switchTab(tab){document.querySelectorAll('[id$="View"]').forEach(v=>v.style.display='none');document.getElementById(tab+'View').style.display='block';}
+switchTab('home');
+
+/* ===== SETTINGS ===== */
+document.getElementById('accentPicker').addEventListener('input',e=>{state.accent=e.target.value;saveState();});
+document.getElementById('themeSelect').addEventListener('change',e=>{state.theme=e.target.value;saveState();});
+document.getElementById('perfMode').addEventListener('change',e=>{state.perf=e.target.checked;saveState();});
+
+/* ===== TIME ===== */
+function updateTime(){document.getElementById('timeDisplay').textContent=new Date().toLocaleTimeString();}
+setInterval(updateTime,1000); updateTime();
+
+/* ===== GAMES ===== */
+let GAMES = [
+"1", "1v1space", "2048", "8ball", "9007199254740992", "BTD4", "Bitlife", "Bloxorz",
+"Chess", "DogeMiner", "Henrystickman", "HexGL", "L2F2", "L2F3", "Minecraft", "OT",
+"PE", "SandboxelsOLD", "Subway", "TIOachievementunlocked", "adrenalinechallenge",
+"among-us", "avalanche", "backrooms", "basketball-stars", "battleforgondor",
+"bigredbutton", "blackknight", "bloonstd", "bloonstd2", "bloxors", "boxhead2play",
+"breakingthebank", "btts", "cannon-basketball-4", "canyondefense", "cattle3d",
+"cell-machine", "championarcher", "chrome-dino", "circlo", "connect3", "cookie-clicker",
+"craftmine", "creativekillchamber", "csgo-clicker", "ctr", "ctr-holiday", "ctr-tr",
+"cubefield", "cupcake2048", "deal-or-no-deal", "death-run-3d", "defend-the-tank",
+"doge2048", "doodle-jump", "doom", "doublewires", "draw-the-hill", "ducklife1",
+"ducklife2", "ducklife3", "edgenotfound", "elasticman", "endlesswar3", "evil-glitch",
+"exo", "factoryballs", "fake-virus", "flappy-2048", "flappy-bird", "flashtetris",
+"game-inside", "geodash", "getaway-shootout", "gimme-the-airpod", "glass-city",
+"google-snake", "grindcraft", "hackertype", "hba", "helicopter", "hexempire",
+"hextris", "idle-breakout", "idle-shark", "impossiblequiz", "interactivebuddy",
+"just-one-boss", "kittencannon", "krunker", "learntofly", "mario", "matrixrampage",
+"meme2048", "minecraft-classic", "minesweeper", "miniputt", "missiles", "motox3m",
+"motox3m-pool", "motox3m-spooky", "motox3m-winter", "n-gon", "ns-shaft", "om-bounce",
+"pandemic2", "papaspizzaria", "paperio2", "papery-planes", "particle-clicker",
+"polybranch", "portalflash", "push-the-square", "push-your-luck", "retro-bowl", "rh",
+"rolly-vortex", "rooftop-snipers", "sand-game", "sandboxels","slope", "sm64", "sm64-main",
+"smashkarts", "smokingbarrels", "snowbattle", "soldier-legend", "solitaire",
+"sort-the-court", "soundboard", "stack", "stack-bump-3d", "stealingthediamond",
+"stickwar", "stormthehouse2", "superhot", "swerve", "tacticalassasin2", "tank-trouble-2",
+"tanuki-sunset", "temple-run-2", "the-final-earth", "thebattle", "theheist",
+"there-is-no-game", "thisistheonlylevel", "tosstheturtle", "tube-jumpers",
+"tunnel-rush", "tv-static", "vex3", "vex4", "vex5", "vex6", "webretro", "webretro-local", "wolf3d",
+"wordle", "worlds-hardest-game", "you-are-bezos","12.2"
+];
+ // add more with "Name" format
+function renderGames(){const grid=document.getElementById('gamesGrid'); grid.innerHTML=''; GAMES.forEach(name=>{const path=`/classes/${name}/index.html`; const img=`/classes/${name}/icon.png`; const card=document.createElement('div'); card.className='card'; card.innerHTML=`<img src="${img}" onerror="this.src='logo.png'"><div class="card-title">${name}</div>`; card.onclick=()=>openGame(path,name); grid.appendChild(card);});}
+renderGames();
+
+/* ===== GAME PLAYER ===== */
+const gameLayer=document.getElementById('gameLayer'); const gameIframe=document.getElementById('gameIframe'); const playingTitle=document.getElementById('playingTitle');
+function openGame(url,name){playingTitle.textContent='Playing — '+name; gameIframe.src=url; gameLayer.style.display='flex'; state.recent=[name,...state.recent.filter(x=>x!==name)].slice(0,3); checkAchievements(name); saveState(); renderRecent();}
+document.getElementById('closeGame').addEventListener('click',()=>{gameLayer.style.display='none'; gameIframe.src='about:blank';});
+function renderRecent(){const el=document.getElementById('recentList'); el.innerHTML=''; state.recent.forEach(name=>{const div=document.createElement('div'); div.className='small'; div.textContent=name; div.onclick=()=>openGame(`/classes/${name}/index.html`,name); el.appendChild(div);});}
+renderRecent();
+function checkAchievements(name){state.achievements[name]=(state.achievements[name]||0)+1; let count=state.achievements[name]; let milestones=[1,10,50,75,100,150]; if(milestones.includes(count)) alert(`Achievement unlocked: Played ${name} ${count} time(s)!`);}
+
+/* ===== EXPORT / IMPORT ===== */
+document.getElementById('exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(state)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='procyon_backup.json'; a.click();});
+document.getElementById('importInput').addEventListener('change',e=>{const file=e.target.files[0]; if(!file)return; const reader=new FileReader(); reader.onload=()=>{try{state=JSON.parse(reader.result); saveState(); renderGames(); renderRecent(); alert('Import successful');}catch(e){alert('Invalid JSON');}}; reader.readAsText(file);});
+
+/* ===== GRID BACKGROUND ===== */
+const canvas=document.getElementById('bgCanvas'); const ctx=canvas.getContext('2d'); let w=canvas.width=window.innerWidth,h=canvas.height=window.innerHeight;
+window.onresize=()=>{w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;};
+const mouse={x:w/2,y:h/2};window.onmousemove=e=>{mouse.x=e.clientX;mouse.y=e.clientY;};
+function getColor(x,y){const dx=mouse.x-x,dy=mouse.y-y,dist=Math.sqrt(dx*dx+dy*dy); let alpha=Math.max(0.05,1-dist/300); switch(state.theme){case'aesthetic':return `rgba(${Math.floor(200+55*Math.random())},${Math.floor(180+75*Math.random())},255,${alpha})`;case'dark':return `rgba(255,255,255,${alpha/2})`;case'light':return `rgba(0,0,0,${alpha/2})`;case'blue':return `rgba(100,180,255,${alpha})`;case'green':return `rgba(100,255,180,${alpha})`;case'red':return `rgba(255,100,100,${alpha})`;case'purple':return `rgba(180,100,255,${alpha})`;case'orange':return `rgba(255,180,100,${alpha})`;default:return `rgba(255,255,255,${alpha})`;}}
+function drawGrid(){ctx.clearRect(0,0,w,h); const gap=30; for(let x=0;x<w;x+=gap){for(let y=0;y<h;y+=gap){ctx.beginPath();ctx.arc(x,y,Math.min(10,Math.sqrt((mouse.x-x)**2+(mouse.y-y)**2)/20),0,Math.PI*2);ctx.strokeStyle=getColor(x,y);ctx.lineWidth=1;ctx.stroke();}} if(!state.perf) requestAnimationFrame(drawGrid);}
+drawGrid();
+</script>
+</body>
+</html>
+
