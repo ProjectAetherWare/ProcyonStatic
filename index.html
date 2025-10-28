@@ -181,7 +181,7 @@ let GAMES = [
 "tanuki-sunset", "temple-run-2", "the-final-earth", "thebattle", "theheist",
 "there-is-no-game", "thisistheonlylevel", "tosstheturtle", "tube-jumpers",
 "tunnel-rush", "tv-static", "vex3", "vex4", "vex5", "vex6", "webretro", "webretro-local", "wolf3d",
-"wordle", "worlds-hardest-game", "you-are-bezos","12.2"
+"wordle", "worlds-hardest-game", "you-are-bezos","12.2", "IRC-CLI"
 ];
  // add more with "Name" format
 function renderGames(){const grid=document.getElementById('gamesGrid'); grid.innerHTML=''; GAMES.forEach(name=>{const path=`/classes/${name}/index.html`; const img=`/classes/${name}/icon.png`; const card=document.createElement('div'); card.className='card'; card.innerHTML=`<img src="${img}" onerror="this.src='logo.png'"><div class="card-title">${name}</div>`; card.onclick=()=>openGame(path,name); grid.appendChild(card);});}
