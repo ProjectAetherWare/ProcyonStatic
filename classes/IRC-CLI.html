@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRC-CLI</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Roboto Mono for a console look -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Classic IRC/Terminal Feel */
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: #0d0d0d; /* Near-black background */
+            color: #cccccc; /* Pale gray text */
+            font-size: 0.875rem; /* Slightly smaller text for terminal density */
+        }
+        .chat-window {
+            height: 100vh;
+            max-width: none;
+        }
+        /* Custom scrollbar style for both chat and users list */
+        #messages-container, #users-container {
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+        #messages-container::-webkit-scrollbar, #users-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        #messages-container::-webkit-scrollbar-thumb, #users-container::-webkit-scrollbar-thumb {
+            background-color: #333333; /* Dark scrollbar */
+            border-radius: 4px;
+        }
+        /* Header and Footer Styling - minimal separation */
+        .header-footer {
+            background-color: #1c1c1c; /* Dark separator */
+            border-color: #333333; 
+        }
+
+        /* Message styling (IRC colors) */
+        .system-message {
+            color: #ffcc00; /* Amber/Yellow for system alerts */
+        }
+        /* .user-info now only defines font-weight; color is applied via inline style in JS */
+        .user-info {
+            font-weight: 700;
+        }
+        .timestamp {
+            color: #999999; /* Darker gray for time */
+            font-size: 0.75rem;
+        }
+        
+        /* Input Field Styling */
+        #message-input {
+            background-color: #0d0d0d; /* Match body background */
+            border-color: #333333;
+            color: #ffffff;
+        }
+        #message-input:focus {
+            box-shadow: 0 0 0 1px #00ffcc; /* Subtle cyan focus glow */
+            border-color: #00ffcc;
+        }
+
+        /* Button Styling */
+        #send-button {
+            background-color: #008888; /* Teal/Cyan button */
+        }
+        #send-button:hover {
+            background-color: #00aaaa;
+        }
+        
+        .channel-info {
+            color: #ff80ff; /* Magenta for channel */
+        }
+    </style>
+</head>
+<body class="p-0 flex flex-col h-screen overflow-hidden">
+
+    <div class="chat-window w-full bg-gray-900 shadow-2xl flex flex-col">
+        <!-- Header -->
+        <header class="p-3 header-footer border-b flex justify-between items-center">
+            <h1 class="text-xl font-bold text-gray-300">IRC-CLI</h1>
+            <div class="flex space-x-4 text-sm">
+                <p>Channel: <span id="current-channel" class="channel-info font-bold">general</span></p>
+                <!-- Nickname text will be dynamically colored -->
+                <p>Nickname: <span id="current-nickname" class="user-info font-bold">...</span></p>
+            </div>
+        </header>
+
+        <!-- Main Content Area: User List (1/5) and Messages (4/5) -->
+        <main class="flex-grow flex overflow-hidden">
+            <!-- User List Container -->
+            <div id="users-container" class="w-1/5 flex-shrink-0 header-footer border-r p-2 space-y-1 h-full">
+                <!-- Users injected here by JS -->
+                <div class="system-message font-bold mb-2">USERS (0)</div>
+            </div>
+            
+            <!-- Messages Container -->
+            <div id="messages-container" class="flex-grow p-4 space-y-1 text-sm h-full">
+                <!-- Messages will be injected here -->
+                <p id="loading-status" class="system-message">[SYSTEM] Connecting to Firebase...</p>
+            </div>
+        </main>
+
+        <!-- Input Form -->
+        <footer class="p-3 header-footer border-t">
+            <form id="message-form" class="flex space-x-3">
+                <span class="text-green-400 self-center user-info">&gt;</span>
+                <input
+                    type="text"
+                    id="message-input"
+                    placeholder="Type message or /help"
+                    required
+                    autocomplete="off"
+                    class="flex-grow p-2 border rounded-none focus:ring-0 transition duration-150"
+                >
+                <button
+                    type="submit"
+                    id="send-button"
+                    class="px-4 py-2 text-white font-semibold rounded-md transition duration-150 shadow-lg disabled:opacity-50"
+                    disabled
+                >
+                    SEND
+                </button>
+            </form>
+        </footer>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, collection, addDoc, onSnapshot, query, where, getDocs, deleteDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- 1. GLOBAL VARIABLES & INITIALIZATION ---
+        
+        // Define the fallback configuration provided by the user
+        const FIREBASE_CONFIG_FALLBACK = {
+            apiKey: "AIzaSyCA1JbezTeI6oYeqvljSnwNN_ZJnL5C40c",
+            authDomain: "chatapp-6ebee.firebaseapp.com",
+            projectId: "chatapp-6ebee",
+            storageBucket: "chatapp-6ebee.firebasestorage.app",
+            messagingSenderId: "262832457927",
+            appId: "1:262832457927:web:2aa79764f0c001ccd516e2",
+            measurementId: "G-BGM1SVXMVL"
+        };
+
+        // Firebase configuration and app ID are provided by the environment, using the user-provided config as a fallback
+        const appId = typeof __app_id !== 'undefined' 
+            ? __app_id 
+            : FIREBASE_CONFIG_FALLBACK.appId; // Use the provided appId as fallback
+            
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : FIREBASE_CONFIG_FALLBACK; // Use the provided config object as fallback
+            
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db, auth;
+        let currentUserId = null;
+        let isAuthReady = false;
+        
+        // Chat State
+        let currentChannel = 'general';
+        let currentNickname = 'Guest' + Math.floor(Math.random() * 1000);
+        let currentUserColor = '#00ffcc'; // Default IRC Aqua color
+        let unsubscribeChat = () => {}; // Function to hold the current channel listener unsubscriber
+        let unsubscribeUsers = () => {}; // Function to hold the current user list listener unsubscriber
+
+        // UI Elements
+        const messagesContainer = document.getElementById('messages-container');
+        const usersContainer = document.getElementById('users-container'); // New element
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const currentChannelEl = document.getElementById('current-channel');
+        const currentNicknameEl = document.getElementById('current-nickname');
+        const loadingStatus = document.getElementById('loading-status');
+        
+        const CHAT_COLLECTION_PATH = `artifacts/${appId}/public/data/messages`;
+        const PRESENCE_COLLECTION_PATH = `artifacts/${appId}/public/data/users_presence`;
+        
+        // Timeouts
+        const PRESENCE_INACTIVITY_MS = 60000; // 60 seconds for user list heartbeat timeout
+        const HISTORY_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds (86,400,000 ms)
+        
+        // List of words to censor (case-insensitive)
+        const CENSOR_WORDS = [
+            'fuck', 'shit', 'ass', 'bitch', 'damn', 'cunt', 'hell', 'piss'
+        ];
+
+
+        // Load nickname and color from session storage if available
+        const savedNickname = sessionStorage.getItem('chatNickname');
+        if (savedNickname) {
+            currentNickname = savedNickname;
+        }
+        const savedColor = sessionStorage.getItem('chatUserColor');
+        if (savedColor) {
+            currentUserColor = savedColor;
+        }
+
+
+        /**
+         * Updates the header UI elements.
+         */
+        function updateUI() {
+            currentChannelEl.textContent = `#${currentChannel}`;
+            currentNicknameEl.textContent = currentNickname;
+            // Update nickname color in the header display
+            currentNicknameEl.style.color = currentUserColor; 
+        }
+
+        /**
+         * Initializes Firebase and handles authentication.
+         */
+        async function initializeFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                setLogLevel('debug'); 
+                updateUI(); // Initial UI update
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                        sendButton.disabled = false;
+                        isAuthReady = true;
+                        
+                        // 1. Clean old messages first
+                        await cleanOldMessages(); 
+
+                        // 2. Start presence tracking and listeners
+                        startHeartbeat();
+                        setupChatListener();
+                        setupUserListener();
+                        
+                        // Send initial system message to the local client
+                        renderSystemMessage(`Welcome! Your ID is ${currentUserId}. Type /help for commands.`);
+                    } else {
+                        if (initialAuthToken) {
+                            await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Firebase Initialization Error:", error);
+                renderSystemMessage(`Error: Cannot connect to chat. See console.`, true);
+            }
+        }
+
+
+        // --- 2. PRESENCE, HISTORY CLEANUP, AND DATA HANDLING (Firestore) ---
+        
+        /**
+         * Cleans up messages older than HISTORY_TIMEOUT_MS (24 hours).
+         */
+        async function cleanOldMessages() {
+            if (!db) return;
+
+            const cutoffTime = Date.now() - HISTORY_TIMEOUT_MS;
+            const messagesColRef = collection(db, CHAT_COLLECTION_PATH);
+            
+            // Query for messages where timestamp is before the cutoff
+            const q = query(messagesColRef, where('timestamp', '<', cutoffTime));
+
+            try {
+                const querySnapshot = await getDocs(q);
+                let deleteCount = 0;
+                
+                querySnapshot.forEach((docSnap) => {
+                    // Start deletion for each old document
+                    deleteDoc(doc(db, CHAT_COLLECTION_PATH, docSnap.id));
+                    deleteCount++;
+                });
+
+                if (deleteCount > 0) {
+                    console.log(`[HISTORY] Cleaned up ${deleteCount} messages older than 24 hours.`);
+                }
+            } catch (error) {
+                console.error("Error cleaning old messages:", error);
+            }
+        }
+
+        /**
+         * Updates the user's presence document in Firestore.
+         */
+        async function updatePresence() {
+            if (!db || !currentUserId) return;
+
+            const userDocRef = doc(db, PRESENCE_COLLECTION_PATH, currentUserId);
+            const presenceData = {
+                userId: currentUserId,
+                nickname: currentNickname,
+                channel: currentChannel,
+                color: currentUserColor,
+                timestamp: Date.now() // Last active time
+            };
+
+            try {
+                // Use setDoc with the userId as the document ID for upserting
+                await setDoc(userDocRef, presenceData);
+            } catch (error) {
+                console.error("Error updating presence:", error);
+            }
+        }
+        
+        /**
+         * Starts a recurring interval to update user presence (heartbeat).
+         */
+        function startHeartbeat() {
+            updatePresence(); // Initial update
+            // Update every 30 seconds (half of the timeout)
+            setInterval(updatePresence, PRESENCE_INACTIVITY_MS / 2); 
+        }
+
+        /**
+         * Sets up a real-time listener for the user list in the current channel.
+         */
+        function setupUserListener() {
+            if (!db || !isAuthReady) return;
+
+            unsubscribeUsers(); 
+            
+            const presenceColRef = collection(db, PRESENCE_COLLECTION_PATH);
+            // Filter users by the channel they are currently in
+            const q = query(presenceColRef, where('channel', '==', currentChannel));
+
+            unsubscribeUsers = onSnapshot(q, (snapshot) => {
+                const activeUsers = [];
+                const now = Date.now();
+                
+                snapshot.forEach(userDoc => {
+                    const data = userDoc.data();
+                    // Filter out users who haven't updated their presence within the timeout
+                    if (data.timestamp && (now - data.timestamp) < PRESENCE_INACTIVITY_MS) {
+                        activeUsers.push(data);
+                    }
+                });
+
+                // Sort users alphabetically by nickname
+                activeUsers.sort((a, b) => a.nickname.localeCompare(b.nickname));
+
+                renderUsers(activeUsers);
+            }, (error) => {
+                console.error("Error listening to users:", error);
+                renderUsers([]); // Clear list on error
+            });
+        }
+
+
+        /**
+         * Sets up a real-time listener for the current chat channel.
+         */
+        function setupChatListener() {
+            if (!db || !isAuthReady) {
+                console.warn("Database or Auth not ready, delaying chat listener setup.");
+                return;
+            }
+
+            // Dispose of the previous listener
+            unsubscribeChat(); 
+            
+            // Create a query that filters messages by the current channel
+            const messagesColRef = collection(db, CHAT_COLLECTION_PATH);
+            const q = query(messagesColRef, where('channel', '==', currentChannel));
+
+            // Set up the new real-time subscription
+            unsubscribeChat = onSnapshot(q, (snapshot) => {
+                loadingStatus?.remove(); // Remove loading status once data arrives
+
+                const messages = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    // Must have timestamp, nickname, and text
+                    if (data.timestamp && data.nickname && data.text) {
+                         messages.push({
+                            id: doc.id,
+                            ...data
+                        });
+                    }
+                });
+
+                // Manually sort by timestamp on the client side (ASC) since orderBy is constrained
+                messages.sort((a, b) => a.timestamp - b.timestamp);
+
+                renderMessages(messages);
+            }, (error) => {
+                console.error("Error listening to messages:", error);
+                renderSystemMessage("Error loading chat. Check console for details.", true);
+            });
+        }
+        
+        /**
+         * Replaces cuss words in the given text with asterisks.
+         * @param {string} text The input text.
+         * @returns {{censoredText: string, censoredCount: number}} The result.
+         */
+        function censorText(text) {
+            let censoredCount = 0;
+            let censoredText = text;
+
+            CENSOR_WORDS.forEach(word => {
+                const regex = new RegExp(`\\b${word}\\b`, 'gi');
+                const replacement = '*'.repeat(word.length);
+                
+                censoredText = censoredText.replace(regex, (match) => {
+                    censoredCount++;
+                    return replacement;
+                });
+            });
+
+            return { censoredText, censoredCount };
+        }
+
+
+        /**
+         * Handles sending a new message to Firestore.
+         * @param {string} text The message content.
+         */
+        async function sendMessage(text) {
+            if (!db || !currentUserId || !text.trim()) {
+                console.error("Cannot send message: Auth or message text missing.");
+                return;
+            }
+            
+            const { censoredText, censoredCount } = censorText(text);
+
+            if (censoredCount > 0) {
+                renderSystemMessage(`Warning: ${censoredCount} prohibited word(s) were automatically filtered from your message.`);
+            }
+
+            const message = {
+                userId: currentUserId,
+                nickname: currentNickname,
+                channel: currentChannel,
+                color: currentUserColor, // Include the current user's color
+                text: censoredText, // Use the censored text
+                timestamp: Date.now() 
+            };
+
+            try {
+                await addDoc(collection(db, CHAT_COLLECTION_PATH), message);
+                messageInput.value = ''; // Clear input on success
+                updatePresence(); // Signal activity
+            } catch (error) {
+                console.error("Error adding document:", error);
+                renderSystemMessage("Failed to send message. See console for details.", true);
+            }
+        }
+
+
+        // --- 3. COMMAND PARSING ---
+
+        /**
+         * Processes text commands starting with '/'.
+         * @param {string} fullText The raw input text.
+         * @returns {boolean} True if a command was processed, false otherwise.
+         */
+        function processCommand(fullText) {
+            const parts = fullText.trim().split(/\s+/);
+            const command = parts[0].toLowerCase();
+            const arg = parts.slice(1).join(' ');
+
+            messageInput.value = ''; // Clear input after attempting command
+
+            switch (command) {
+                case '/help':
+                    renderHelp();
+                    return true;
+                
+                case '/nick':
+                    if (arg && arg.length >= 2 && arg.length <= 15 && /^[a-zA-Z0-9_-]+$/.test(arg)) {
+                        const oldNickname = currentNickname;
+                        currentNickname = arg;
+                        sessionStorage.setItem('chatNickname', currentNickname);
+                        updateUI();
+                        updatePresence(); // Update presence immediately
+                        renderSystemMessage(`Nickname changed from ${oldNickname} to ${currentNickname}`);
+                    } else {
+                        renderSystemMessage("Usage: /nick <newNickname> (2-15 characters, alphanumeric/dashes/underscores only)");
+                    }
+                    return true;
+                
+                case '/join':
+                    if (arg && arg.length >= 2 && arg.length <= 20 && /^[a-zA-Z0-9_-]+$/.test(arg)) {
+                        const newChannel = arg.toLowerCase();
+                        if (newChannel === currentChannel) {
+                            renderSystemMessage(`You are already in channel #${currentChannel}.`);
+                            return true;
+                        }
+                        const oldChannel = currentChannel;
+                        currentChannel = newChannel;
+                        updateUI();
+                        setupChatListener(); 
+                        setupUserListener(); // Re-subscribe to the new channel's user list
+                        updatePresence(); // Update presence immediately
+                        renderSystemMessage(`Joined new channel: #${currentChannel} (Leaving #${oldChannel})`);
+                    } else {
+                        renderSystemMessage("Usage: /join <channelName> (2-20 characters, alphanumeric/dashes/underscores only)");
+                    }
+                    return true;
+
+                case '/color':
+                    // Regex to validate common hex formats: #RGB, #RRGGBB, #rgb, #rrggbb
+                    const colorRegex = /^#([0-9A-F]{3}){1,2}$/i;
+                    if (arg && colorRegex.test(arg)) {
+                        const oldColor = currentUserColor;
+                        currentUserColor = arg.toUpperCase();
+                        sessionStorage.setItem('chatUserColor', currentUserColor);
+                        updateUI();
+                        updatePresence(); // Update presence immediately
+                        // Use inline styles to display the color change clearly
+                        renderSystemMessage(`Color changed from <span style="color: ${oldColor}">${oldColor}</span> to <span style="color: ${currentUserColor}">${currentUserColor}</span>`);
+                    } else {
+                        renderSystemMessage("Usage: /color <#HEXCODE> (e.g., /color #F00 or /color #1A2B3C)");
+                    }
+                    return true;
+
+                default:
+                    renderSystemMessage(`Unknown command: ${command}. Type /help for a list of commands.`);
+                    return false;
+            }
+        }
+
+        /**
+         * Renders the help message to the messages container.
+         */
+        function renderHelp() {
+            renderSystemMessage(`--- Command List ---`);
+            renderSystemMessage(`/nick <name>: Change your display nickname.`);
+            renderSystemMessage(`/join <channel>: Switch to a different chat channel.`);
+            renderSystemMessage(`/color <hex>: Set your username color (e.g., #FF00FF).`);
+            renderSystemMessage(`/help: Show this list of commands.`);
+            renderSystemMessage(`--------------------`);
+        }
+
+
+        // --- 4. UI RENDERING AND EVENTS ---
+        
+        /**
+         * Renders a system message to the chat.
+         * @param {string} text The system message content.
+         */
+        function renderSystemMessage(text, error = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `p-1 ${error ? 'text-red-400' : 'system-message'}`;
+            messageDiv.innerHTML = `[SYSTEM] ${text}`;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        /**
+         * Renders the list of active users.
+         * @param {Array<Object>} users The sorted array of active user objects.
+         */
+        function renderUsers(users) {
+            // Clear previous list, but keep the header
+            usersContainer.innerHTML = `<div class="system-message font-bold mb-2">USERS (${users.length})</div>`;
+
+            if (users.length === 0) {
+                usersContainer.innerHTML += '<div class="text-gray-500 italic p-1">No other users online.</div>';
+                return;
+            }
+
+            users.forEach(user => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'p-1 hover:bg-[#1a1a1a] transition duration-100 cursor-default truncate';
+                
+                const nicknameSpan = document.createElement('span');
+                nicknameSpan.className = 'user-info font-bold';
+                nicknameSpan.textContent = user.nickname;
+                nicknameSpan.style.color = user.color || '#00ffcc'; // Apply custom color
+
+                userDiv.appendChild(nicknameSpan);
+                usersContainer.appendChild(userDiv);
+            });
+        }
+
+
+        /**
+         * Renders the list of messages in the container.
+         * @param {Array<Object>} messages The sorted array of message objects.
+         */
+        function renderMessages(messages) {
+            // Check if user is near the bottom for auto-scroll logic
+            const isScrolledToBottom = messagesContainer.scrollHeight - messagesContainer.clientHeight <= messagesContainer.scrollTop + 10;
+            
+            messagesContainer.innerHTML = '';
+            
+            if (messages.length === 0) {
+                renderSystemMessage(`No messages in channel #${currentChannel}. Say hi!`);
+                return;
+            }
+
+            messages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                // Use subtle background hover for IRC style
+                messageDiv.className = 'flex flex-row space-x-2 p-1 hover:bg-[#1a1a1a] transition duration-100';
+
+                // Format Time
+                const date = new Date(msg.timestamp);
+                const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                
+                // Timestamp
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'timestamp flex-shrink-0';
+                timeSpan.textContent = `[${timeStr}]`;
+
+                // Nickname
+                const nicknameSpan = document.createElement('span');
+                nicknameSpan.className = 'user-info flex-shrink-0';
+                nicknameSpan.textContent = `<${msg.nickname}>`;
+                
+                // Apply the color from the message data, defaulting to the system aqua color if missing
+                nicknameSpan.style.color = msg.color || '#00ffcc';
+                
+                // Message Text
+                const textSpan = document.createElement('span');
+                textSpan.className = 'text-white flex-grow whitespace-pre-wrap';
+                textSpan.textContent = msg.text;
+
+                messageDiv.appendChild(timeSpan);
+                messageDiv.appendChild(nicknameSpan);
+                messageDiv.appendChild(textSpan);
+                messagesContainer.appendChild(messageDiv);
+            });
+
+            // Auto-scroll to bottom only if the user was near the bottom before update
+            if (isScrolledToBottom || messages.length === 1) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+
+        /**
+         * Handles the form submission event.
+         * @param {Event} e The submit event.
+         */
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const text = messageInput.value.trim();
+            
+            if (!text) return;
+
+            if (text.startsWith('/')) {
+                // If it starts with '/', attempt to process as a command
+                processCommand(text);
+                messageInput.value = '';
+            } else {
+                // Otherwise, send as a regular message
+                sendMessage(text);
+            }
+        }
+
+        // Attach event listener
+        messageForm.addEventListener('submit', handleFormSubmit);
+
+        // Start the application
+        window.onload = initializeFirebase;
+
+    </script>
+</body>
+</html>
