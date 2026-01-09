@@ -1,2 +1,2 @@
-# gdl
-Geometry Dash Lite ripped straight off of geometrydashlite.io
+#Procyon Static
+lowkey goated games website
