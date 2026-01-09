@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI Wireframe Recreation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.5s ease;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+
+        .panel-transition {
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .bg-pattern {
+            background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+</head>
+<body class="bg-black text-white h-screen w-full overflow-hidden p-6 relative flex flex-col" id="body">
+
+    <!-- Background Layer -->
+    <main class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <img src="bg.png" id="bg-img" alt="" class="w-full h-full object-cover opacity-20 transition-opacity duration-1000" onerror="this.style.display='none'">
+        <div class="absolute inset-0 flex items-center justify-center opacity-10 select-none">
+            <span class="text-8xl font-black italic tracking-widest uppercase">bg.png</span>
+        </div>
+    </main>
+
+    <!-- Content Spacer -->
+    <div class="flex-grow"></div>
+
+    <!-- Main Panel Container -->
+    <aside id="main-panel" class="relative z-10 w-[340px] h-fit bg-[#1e1e1e] rounded-[3rem] flex flex-col items-center pt-8 pb-6 text-white shadow-[0_35px_60px_-15px_rgba(0,0,0,0.6)] border border-white/5 self-start transition-all duration-300 ease-in-out">
+        
+        <!-- Minimizable Content -->
+        <div id="panel-content-wrapper" class="w-full overflow-hidden panel-transition max-h-[500px] opacity-100">
+            <!-- Header -->
+            <div class="flex justify-between w-full px-10 mb-6 items-start">
+                <div class="text-left">
+                    <div id="clock-time" class="text-[14px] font-medium tracking-wide leading-tight uppercase font-mono">12:00:00 PM</div>
+                    <div id="clock-date" class="text-[12px] text-zinc-400 font-medium">1/1/26</div>
+                </div>
+                
+                <div class="text-right flex flex-col items-end">
+                    <div class="h-6 w-12 bg-zinc-800 rounded flex items-center justify-center mb-1 border border-white/5 overflow-hidden">
+                        <img src="logo.png" alt="" class="h-full w-full object-contain" onerror="this.style.display='none'">
+                        <span class="text-[8px] opacity-20 italic">LOGO</span>
+                    </div>
+                    <div class="text-[9px] tracking-[0.2em] uppercase text-zinc-500 font-bold">logo.png</div>
+                </div>
+            </div>
+
+            <!-- Nav & Dynamic Area -->
+            <div class="flex w-full relative px-6 mb-6 h-[280px]">
+                <nav class="flex flex-col gap-3 justify-center z-10 shrink-0">
+                    <button onclick="switchTab('home')" class="nav-btn w-12 h-12 rounded-full flex items-center justify-center bg-[#2a2a2a] text-zinc-400 hover:bg-[#333] transition-all border border-white/5 active:scale-95" id="nav-home">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    </button>
+                    <button onclick="switchTab('settings')" class="nav-btn w-12 h-12 rounded-full flex items-center justify-center bg-[#2a2a2a] text-zinc-400 hover:bg-[#333] transition-all border border-white/5 active:scale-95" id="nav-settings">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <button onclick="switchTab('game')" class="nav-btn w-12 h-12 rounded-full flex items-center justify-center bg-[#2a2a2a] text-zinc-400 hover:bg-[#333] transition-all border border-white/5 active:scale-95" id="nav-game">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="15.5" cy="15.5" r=".5"/><circle cx="18.5" cy="15.5" r=".5"/><circle cx="15.5" cy="12.5" r=".5"/><circle cx="18.5" cy="12.5" r=".5"/></svg>
+                    </button>
+                    <button onclick="switchTab('chat')" class="nav-btn w-12 h-12 rounded-full flex items-center justify-center bg-[#2a2a2a] text-zinc-400 hover:bg-[#333] transition-all border border-white/5 active:scale-95" id="nav-chat">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </button>
+                    <button onclick="switchTab('profile')" class="nav-btn w-12 h-12 rounded-full flex items-center justify-center bg-[#2a2a2a] text-zinc-400 hover:bg-[#333] transition-all border border-white/5 active:scale-95" id="nav-profile">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </button>
+                </nav>
+
+                <div id="dynamic-content" class="flex-grow flex items-center justify-center pl-4 pr-2 overflow-hidden">
+                    <!-- Default State -->
+                    <p class="text-zinc-500 text-[13px] font-medium leading-tight tracking-wide text-center px-4">
+                        Select an icon on the sidebar.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Bar Footer -->
+        <div class="flex gap-2 px-6 w-full justify-center h-fit">
+            <button class="bg-[#ff4d4d] flex-grow h-12 rounded-xl flex items-center justify-center hover:brightness-110 transition-all shadow-lg active:scale-95">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <button onclick="location.reload()" class="bg-[#ff4d4d] flex-grow h-12 rounded-xl flex items-center justify-center hover:brightness-110 transition-all shadow-lg active:scale-95">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>
+            </button>
+            <button onclick="toggleMinimize()" class="bg-[#ff4d4d] flex-grow h-12 rounded-xl flex items-center justify-center hover:brightness-110 transition-all shadow-lg active:scale-95">
+                <svg id="minimize-arrow" class="fill-current transition-transform duration-300 rotate-180" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18L12 4z"/></svg>
+            </button>
+            <button class="bg-[#ff4d4d] flex-grow h-12 rounded-xl flex items-center justify-center hover:brightness-110 transition-all shadow-lg active:scale-95">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Hidden Input for File Import -->
+    <input type="file" id="data-import-input" class="hidden" accept=".json">
+
+    <script>
+        // State
+        let isMinimized = false;
+        let activeTabId = 'none';
+        let isDarkMode = true;
+        let volume = 70;
+
+        // Elements
+        const clockTime = document.getElementById('clock-time');
+        const clockDate = document.getElementById('clock-date');
+        const contentWrapper = document.getElementById('panel-content-wrapper');
+        const minimizeArrow = document.getElementById('minimize-arrow');
+        const dynamicContent = document.getElementById('dynamic-content');
+        const body = document.getElementById('body');
+        const bgImg = document.getElementById('bg-img');
+
+        // Clock logic
+        function updateClock() {
+            const now = new Date();
+            clockTime.textContent = now.toLocaleTimeString('en-US', { hour12: true, hour: 'numeric', minute: '2-digit', second: '2-digit' });
+            clockDate.textContent = now.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Panel Toggle
+        function toggleMinimize() {
+            isMinimized = !isMinimized;
+            if (isMinimized) {
+                contentWrapper.style.maxHeight = '0px';
+                contentWrapper.style.opacity = '0';
+                minimizeArrow.classList.remove('rotate-180');
+            } else {
+                contentWrapper.style.maxHeight = '500px';
+                contentWrapper.style.opacity = '1';
+                minimizeArrow.classList.add('rotate-180');
+            }
+        }
+
+        // Tab Switching
+        function switchTab(tabId) {
+            // Update UI buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-[#ff4d4d]', 'text-white');
+                btn.classList.add('bg-[#2a2a2a]', 'text-zinc-400');
+            });
+
+            if (activeTabId === tabId) {
+                activeTabId = 'none';
+                renderDefault();
+            } else {
+                activeTabId = tabId;
+                const activeBtn = document.getElementById(`nav-${tabId}`);
+                if (activeBtn) {
+                    activeBtn.classList.remove('bg-[#2a2a2a]', 'text-zinc-400');
+                    activeBtn.classList.add('bg-[#ff4d4d]', 'text-white');
+                }
+
+                if (tabId === 'settings') {
+                    renderSettings();
+                } else if (tabId === 'chat') {
+                    renderChat();
+                } else {
+                    renderPlaceholder(tabId);
+                }
+            }
+        }
+
+        function renderDefault() {
+            dynamicContent.innerHTML = `
+                <p class="text-zinc-500 text-[13px] font-medium leading-tight tracking-wide text-center px-4">
+                    Select an icon on the sidebar.
+                </p>
+            `;
+        }
+
+        function renderPlaceholder(id) {
+            dynamicContent.innerHTML = `
+                <div class="text-center opacity-40">
+                    <h3 class="uppercase text-xs font-bold tracking-widest">${id}</h3>
+                    <p class="text-[10px] mt-1">Panel in development</p>
+                </div>
+            `;
+        }
+
+        function renderChat() {
+            dynamicContent.innerHTML = `
+                <div class="w-full h-full p-1 overflow-hidden flex flex-col">
+                    <h3 class="text-zinc-400 text-[11px] uppercase tracking-widest font-bold mb-2 border-b border-white/5 pb-2 text-left shrink-0">Chat</h3>
+                    <div class="flex-grow rounded-xl overflow-hidden bg-black/40 border border-white/5">
+                        <iframe 
+                            src="/classes/IRC-CLI/index.html" 
+                            class="w-full h-full border-none"
+                            title="IRC Chat"
+                        ></iframe>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSettings() {
+            dynamicContent.innerHTML = `
+                <div class="w-full h-full p-2 custom-scrollbar overflow-y-auto">
+                    <h3 class="text-zinc-400 text-[11px] uppercase tracking-widest font-bold mb-4 border-b border-white/5 pb-2 text-left">Settings</h3>
+                    
+                    <div class="flex flex-col gap-3">
+                        <div class="flex flex-col bg-white/5 p-3 rounded-lg gap-2">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-500"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                                    <span class="text-[12px]">Page Volume</span>
+                                </div>
+                                <span class="text-[10px] font-mono">${volume}%</span>
+                            </div>
+                            <input type="range" min="0" max="100" value="${volume}" oninput="adjustVolume(this.value)" 
+                                   class="w-full h-1 bg-zinc-700 rounded-full appearance-none cursor-pointer accent-[#ff4d4d]">
+                        </div>
+
+                        <button onclick="toggleTheme()" class="flex items-center justify-between bg-white/5 p-3 rounded-lg hover:bg-white/10 transition-colors">
+                            <div class="flex items-center gap-2">
+                                ${isDarkMode ? 
+                                    `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-500"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>` : 
+                                    `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#ff4d4d]"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`
+                                }
+                                <span class="text-[12px]">Theme: ${isDarkMode ? 'Dark' : 'Light'}</span>
+                            </div>
+                            <div class="w-8 h-4 rounded-full relative transition-colors ${isDarkMode ? 'bg-[#ff4d4d]' : 'bg-zinc-600'}">
+                                <div class="absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${isDarkMode ? 'right-0.5' : 'left-0.5'}"></div>
+                            </div>
+                        </button>
+
+                        <div class="mt-2">
+                            <h4 class="text-[10px] text-zinc-600 uppercase font-bold mb-2 ml-1 text-left">Data Management</h4>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="exportStorage()" class="flex flex-col items-center gap-1 bg-white/5 p-2 rounded-lg hover:bg-white/10 transition-colors border border-white/5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-400"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                    <span class="text-[9px] uppercase font-bold">Export All</span>
+                                </button>
+                                <button onclick="document.getElementById('data-import-input').click()" class="flex flex-col items-center gap-1 bg-white/5 p-2 rounded-lg hover:bg-white/10 transition-colors border border-white/5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-zinc-400"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                    <span class="text-[9px] uppercase font-bold">Import All</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Logic Functions
+        function adjustVolume(val) {
+            volume = val;
+            renderSettings(); // Re-render to update the % text
+            const media = document.querySelectorAll('audio, video');
+            media.forEach(el => el.volume = val / 100);
+        }
+
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            if (isDarkMode) {
+                body.classList.remove('bg-zinc-100', 'text-black');
+                body.classList.add('bg-black', 'text-white');
+                bgImg.classList.replace('opacity-10', 'opacity-20');
+            } else {
+                body.classList.remove('bg-black', 'text-white');
+                body.classList.add('bg-zinc-100', 'text-black');
+                bgImg.classList.replace('opacity-20', 'opacity-10');
+            }
+            if (activeTabId === 'settings') renderSettings();
+        }
+
+        function exportStorage() {
+            const data = JSON.stringify(localStorage);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `site_data_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        document.getElementById('data-import-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const json = JSON.parse(event.target.result);
+                    localStorage.clear();
+                    Object.keys(json).forEach(key => localStorage.setItem(key, json[key]));
+                    location.reload();
+                } catch (err) {
+                    alert('Invalid JSON file');
+                }
+            };
+            reader.readAsText(file);
+        });
+    </script>
+</body>
+</html>
