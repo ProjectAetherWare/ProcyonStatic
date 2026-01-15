@@ -181,6 +181,11 @@
 
         window.firebaseSystem = { auth, db, appId };
 
+        // Exit confirmation
+        window.onbeforeunload = function() {
+            return "Are you sure you want to exit Procyon OS?";
+        };
+
         // Global State
         const GAMES = ["1", "1v1space", "2048", "8ball", "9007199254740992", "BTD4", "Bitlife", "Bloxorz",
             "Chess", "DogeMiner", "Henrystickman", "HexGL", "L2F2", "L2F3", "Minecraft", "OT",
@@ -209,7 +214,7 @@
             "tanuki-sunset", "temple-run-2", "the-final-earth", "thebattle", "theheist",
             "there-is-no-game", "thisistheonlylevel", "tosstheturtle", "tube-jumpers",
             "tunnel-rush", "tv-static", "vex3", "vex4", "vex5", "vex6", "webretro", "webretro-local", "wolf3d",
-            "wordle", "worlds-hardest-game", "you-are-bezos","EaglerX","EaglerForge", "JSflash", "geometrylite"];
+            "wordle", "worlds-hardest-game", "you-are-bezos","EaglerX","EaglerForge", "JSflash"];
         
         const GREETINGS = ["PROCYON ONLINE.", "Systems Green.", "Quantum handshake successful.", "Awaiting input...", "Matrix calibrated."];
 
