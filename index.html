@@ -186,37 +186,39 @@
             return "Are you sure you want to exit Procyon OS?";
         };
 
-        // Global State
-        const GAMES = ["1", "1v1space", "2048", "8ball", "9007199254740992", "BTD4", "Bitlife", "Bloxorz",
-            "Chess", "DogeMiner", "Henrystickman", "HexGL", "L2F2", "L2F3", "Minecraft", "OT",
-            "PE", "SandboxelsOLD", "Subway", "TIOachievementunlocked", "adrenalinechallenge",
-            "among-us", "avalanche", "backrooms", "basketball-stars", "battleforgondor",
-            "bigredbutton", "blackknight", "bloonstd", "bloonstd2", "bloxors", "boxhead2play",
-            "breakingthebank", "btts", "cannon-basketball-4", "canyondefense", "cattle3d",
-            "cell-machine", "championarcher", "chrome-dino", "circlo", "connect3", "cookie-clicker",
-            "craftmine", "creativekillchamber", "csgo-clicker", "ctr", "ctr-holiday", "ctr-tr",
-            "cubefield", "cupcake2048", "deal-or-no-deal", "death-run-3d", "defend-the-tank",
-            "doge2048", "doodle-jump", "doom", "doublewires", "draw-the-hill", "ducklife1",
-            "ducklife2", "ducklife3", "edgenotfound", "elasticman", "endlesswar3", "evil-glitch",
-            "exo", "factoryballs", "flappy-2048", "flappy-bird", "flashtetris",
-            "game-inside", "geodash", "getaway-shootout", "gimme-the-airpod", "glass-city",
-            "google-snake", "grindcraft", "hackertype", "hba", "helicopter", "hexempire",
-            "hextris", "idle-breakout", "idle-shark", "impossiblequiz", "interactivebuddy",
-            "just-one-boss", "kittencannon", "krunker", "learntofly", "mario", "matrixrampage",
-            "meme2048", "minecraft-classic", "minesweeper", "miniputt", "missiles", "motox3m",
-            "motox3m-pool", "motox3m-spooky", "motox3m-winter", "n-gon", "ns-shaft", "om-bounce",
-            "pandemic2", "papaspizzaria", "paperio2", "papery-planes", "particle-clicker",
-            "polybranch", "portalflash", "push-the-square", "push-your-luck", "retro-bowl", "rh",
-            "rolly-vortex", "rooftop-snipers", "sand-game", "sandboxels","slope", "sm64", "sm64-main",
-            "smashkarts", "smokingbarrels", "snowbattle", "soldier-legend", "solitaire",
-            "sort-the-court", "soundboard", "stack", "stack-bump-3d", "stealingthediamond",
-            "stickwar", "stormthehouse2", "superhot", "swerve", "tacticalassasin2", "tank-trouble-2",
-            "tanuki-sunset", "temple-run-2", "the-final-earth", "thebattle", "theheist",
-            "there-is-no-game", "thisistheonlylevel", "tosstheturtle", "tube-jumpers",
-            "tunnel-rush", "tv-static", "vex3", "vex4", "vex5", "vex6", "webretro", "webretro-local", "wolf3d",
-            "wordle", "worlds-hardest-game", "you-are-bezos","EaglerX","EaglerForge", "JSflash", "Eaglerforge", "GeometryLite"];
+// Global State
+const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "9007199254740992", "AgesOfConflict",
+    "BTD4", "Bitlife", "Bloxorz", "Cattle3d", "Chess", "Cubefield", "DogeMiner", "FNAF",
+    "Henrystickman", "HexGL", "IRC-CLI", "Infinite Craft", "JSflash", "L2F2", "L2F3", "OT",
+    "PE", "Ragdoll-hit", "Run 3", "SandboxelsOLD", "Subway", "TIO", "achievementunlocked",
+    "adrenalinechallenge", "among-us", "avalanche", "backrooms", "basketball-stars",
+    "battleforgondor", "bigredbutton", "blackknight", "bloonstd", "bloonstd2", "bloxors",
+    "boxhead2play", "breakingthebank", "btts", "cannon-basketball-4", "canyondefense",
+    "cell-machine", "championarcher", "chrome-dino", "circlo", "connect3", "cookie-clicker",
+    "craftmine", "creativekillchamber", "csgo-clicker", "ctr", "ctr-holiday", "ctr-tr",
+    "Cubefield", "cupcake2048", "deal-or-no-deal", "death-run-3d", "defend-the-tank",
+    "doge2048", "doodle-jump", "doom", "doublewires", "draw-the-hill", "ducklife1",
+    "ducklife2", "ducklife3", "edgenotfound", "elasticman", "endlesswar3", "evil-glitch",
+    "exo", "factoryballs", "fake-virus", "flappy-2048", "flappy-bird", "flashtetris",
+    "game-inside", "geodash", "geometrylite", "getaway-shootout", "gimme-the-airpod",
+    "glass-city", "google-snake", "grindcraft", "hackertype", "hba", "helicopter",
+    "hexempire", "hextris", "idle-breakout", "idle-shark", "impossiblequiz",
+    "interactivebuddy", "just-one-boss", "kittencannon", "krunker", "learntofly", "mario",
+    "matrixrampage", "meme2048", "minecraft-classic", "minesweeper", "miniputt", "missiles",
+    "motox3m", "motox3m-pool", "motox3m-spooky", "motox3m-winter", "n-gon", "ns-shaft",
+    "om-bounce", "pandemic2", "papaspizzaria", "paperio2", "papery-planes",
+    "particle-clicker", "polybranch", "portalflash", "push-the-square", "push-your-luck",
+    "retro-bowl", "rh", "rolly-vortex", "rooftop-snipers", "sand-game", "sandboxels",
+    "slope", "sm64", "sm64-main", "smashkarts", "smokingbarrels", "snowbattle",
+    "soldier-legend", "solitaire", "sort-the-court", "soundboard", "stack",
+    "stack-bump-3d", "stealingthediamond", "stickwar", "stormthehouse2", "superhot",
+    "swerve", "tacticalassasin2", "tank-trouble-2", "tanuki-sunset", "temple-run-2",
+    "the-final-earth", "thebattle", "theheist", "there-is-no-game", "thisistheonlylevel",
+    "tosstheturtle", "tube-jumpers", "tunnel-rush", "tv-static", "vex3", "vex4", "vex5",
+    "vex6", "webretro", "webretro-local", "wolf3d", "wordle", "worlds-hardest-game",
+    "worlds-hardest-game-2", "you-are-bezos"];
         
-        const GREETINGS = ["PROCYON ONLINE.", "Systems Green.", "Quantum handshake successful.", "Awaiting input...", "Matrix calibrated."];
+        const GREETINGS = ["what am i doing", "why does half this not work", "have you heard about the word", "bird bird bird is the word I said", "Go play a game or something", "what"];
 
         let isMinimized = false;
         let activeTabId = 'none';
