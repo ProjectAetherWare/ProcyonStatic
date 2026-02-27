@@ -1,0 +1,100 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Loading...</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<style>
+body {
+    margin: 0;
+    background: #111;
+    color: white;
+    font-family: Arial;
+}
+
+#loader {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#barBox {
+    width: 300px;
+    height: 20px;
+    border: 2px solid white;
+}
+
+#bar {
+    height: 100%;
+    width: 0%;
+    background: cyan;
+}
+
+iframe {
+    width: 100%;
+    height: 100vh;
+    border: none;
+    display: none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="loader">
+    <h2>Loading</h2>
+    <div id="barBox">
+        <div id="bar"></div>
+    </div>
+    <div id="text">Starting...</div>
+</div>
+
+<iframe id="game"></iframe>
+
+<script>
+const bar = document.getElementById("bar");
+const text = document.getElementById("text");
+
+function progress(p, t) {
+    bar.style.width = p + "%";
+    text.textContent = t;
+}
+
+async function start() {
+
+    progress(10, "Downloading...");
+
+    const zipData = await fetch("index.zip").then(r => r.arrayBuffer());
+
+    progress(50, "Unzipping...");
+
+    const zip = await JSZip.loadAsync(zipData);
+
+    const html = await zip.file("index.html").async("string");
+
+    progress(90, "Launching...");
+
+    const blob = new Blob([html], {type: "text/html"});
+    const url = URL.createObjectURL(blob);
+
+    document.getElementById("loader").style.display = "none";
+
+    const frame = document.getElementById("game");
+    frame.style.display = "block";
+    frame.src = url;
+
+    progress(100, "Done");
+}
+
+start();
+</script>
+
+</body>
+</html>
+```
