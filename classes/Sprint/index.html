@@ -2,20 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>SWF Player</title>
+    <title>Sprint - Fullscreen</title>
     <script src="ruffle.js"></script>
     <style>
         html, body {
             margin: 0;
             padding: 0;
-            background: black;
+            width: 100%;
             height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background: black;
+            overflow: hidden;
         }
 
         #player {
+            width: 100%;
+            height: 100%;
+        }
+
+        ruffle-embed {
             width: 100%;
             height: 100%;
         }
@@ -30,6 +34,10 @@
     window.addEventListener("load", () => {
         const ruffle = window.RufflePlayer.newest();
         const player = ruffle.createPlayer();
+        player.style.width = "100%";
+        player.style.height = "100%";
+        player.style.display = "block";
+        player.style.objectFit = "contain"; // scale SWF to fit fullscreen
         const container = document.getElementById("player");
         container.appendChild(player);
         player.load("index.swf");
