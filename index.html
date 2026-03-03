@@ -18,8 +18,20 @@
         }
 
         #main-panel {
-            transition: background-color 0.5s ease, border-color 0.5s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease, height 0.3s ease;
+            transition: background-color 0.3s ease, border-color 0.5s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease, height 0.3s ease, backdrop-filter 0.3s ease;
             transform-origin: bottom left;
+        }
+
+        /* Glass Mode Styles */
+        .glass-ui #main-panel {
+            background-color: rgba(30, 30, 30, 0.72) !important;
+            backdrop-filter: blur(12px);
+        }
+        .glass-ui .nav-btn, .glass-ui .bg-accent, .glass-ui .bg-zinc-800 {
+            opacity: 0.72;
+        }
+        .glass-ui .nav-btn:hover, .glass-ui .bg-accent:hover {
+            opacity: 1;
         }
 
         .custom-scrollbar::-webkit-scrollbar {
@@ -77,14 +89,19 @@
         .chat-tab-btn.active {
             background: var(--accent) !important;
             color: white !important;
+            opacity: 1 !important;
         }
 
         .bg-accent { background-color: var(--accent); }
         .border-accent { border-color: var(--accent); }
         .text-accent { color: var(--accent); }
+
+        /* Performance Mode Styles */
+        .perf-mode #bg-img, .perf-mode #custom-bg-overlay { display: none !important; }
+        .perf-mode * { transition: none !important; }
     </style>
 </head>
-<body class="bg-black text-white h-screen w-full overflow-hidden p-6 relative flex flex-col" id="body">
+<body class="bg-black text-white h-screen w-full overflow-hidden p-6 relative flex flex-col glass-ui" id="body">
 
     <!-- Blackout Screen (Hidden by default) -->
     <div id="blackout-screen" class="fixed inset-0 bg-black z-[99999] hidden pointer-events-none"></div>
@@ -224,9 +241,9 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
     "motox3m", "motox3m-pool", "motox3m-spooky", "motox3m-winter", "n-gon", "ns-shaft",
     "om-bounce", "pandemic2", "papaspizzaria", "paperio2", "papery-planes",
     "particle-clicker", "polybranch", "portalflash", "push-the-square", "push-your-luck",
-    "ResentMC 1.8.8", "retro-bowl", "rh", "rolly-vortex", "rooftop-snipers", "sand-game", "sandboxels",
+    "Red Ball 4", "ResentMC 1.8.8", "retro-bowl", "rh", "rolly-vortex", "rooftop-snipers", "sand-game", "sandboxels",
     "slope", "sm64", "sm64-main", "smashkarts", "smokingbarrels", "snowbattle",
-    "soldier-legend", "solitaire", "sort-the-court", "soundboard", "stack",
+    "soldier-legend", "solitaire", "sort-the-court", "soundboard", "Sprint", "stack",
     "stack-bump-3d", "stealingthediamond", "stickwar", "stormthehouse2", "superhot",
     "swerve", "tacticalassasin2", "tank-trouble-2", "tanuki-sunset", "temple-run-2",
     "the-final-earth", "thebattle", "theheist", "there-is-no-game", "thisistheonlylevel",
@@ -239,6 +256,8 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
         let isMinimized = false;
         let activeTabId = 'none';
         let isDarkMode = localStorage.getItem('pro_theme') !== 'light';
+        let isPerformanceMode = localStorage.getItem('pro_perf') === 'true';
+        let isGlassEnabled = localStorage.getItem('pro_glass') !== 'false'; // Default true
         let panicUrl = localStorage.getItem('pro_panic_url') || 'https://classroom.google.com';
         let favorites = JSON.parse(localStorage.getItem('pro_favorites')) || [];
         let panelScale = parseFloat(localStorage.getItem('pro_panel_scale')) || 1.0;
@@ -250,6 +269,7 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
         let cloakIcon = localStorage.getItem('pro_cloak_icon') || '';
         let currentUser = null;
         let currentActivity = 'Idle';
+        let clockInterval = null;
         
         let usersOnline = [];
         let myFriends = [];
@@ -273,7 +293,7 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
                 link.href = cloakIcon;
             }
         }
-        applyCloak(); // Initial call
+        applyCloak();
 
         // Auth Logic
         onAuthStateChanged(auth, async (user) => {
@@ -284,12 +304,13 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
                     localStorage.setItem('pro_friend_code', friendCode);
                 }
 
-                // Cloud Sync
                 const userDoc = await getDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'profile', 'settings'));
                 if (userDoc.exists()) {
                     const data = userDoc.data();
                     if (data.favorites) favorites = data.favorites;
                     if (data.theme) isDarkMode = data.theme === 'dark';
+                    if (data.perf !== undefined) isPerformanceMode = data.perf;
+                    if (data.glass !== undefined) isGlassEnabled = data.glass;
                     if (data.scale) panelScale = data.scale;
                     if (data.bg) customBgUrl = data.bg;
                     if (data.name && !user.displayName) profileName = data.name;
@@ -352,6 +373,8 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
             await setDoc(settingsRef, {
                 favorites,
                 theme: isDarkMode ? 'dark' : 'light',
+                perf: isPerformanceMode,
+                glass: isGlassEnabled,
                 scale: panelScale,
                 bg: customBgUrl,
                 name: profileName,
@@ -362,7 +385,6 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
             }, { merge: true });
         }
 
-        // Functions
         window.updateClock = function() {
             const now = new Date();
             const timeEl = document.getElementById('clock-time');
@@ -380,8 +402,23 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
             if (isDarkMode) { body.classList.remove('light-mode'); body.classList.add('bg-black'); } 
             else { body.classList.add('light-mode'); body.classList.remove('bg-black'); }
             
-            if (customBgUrl) { customBgOverlay.style.backgroundImage = `url('${customBgUrl}')`; customBgOverlay.style.opacity = '0.4'; } 
-            else { customBgOverlay.style.opacity = '0'; }
+            if (isPerformanceMode) {
+                body.classList.add('perf-mode');
+                if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
+            } else {
+                body.classList.remove('perf-mode');
+                if (!clockInterval) clockInterval = setInterval(updateClock, 1000);
+            }
+
+            if (isGlassEnabled) body.classList.add('glass-ui');
+            else body.classList.remove('glass-ui');
+
+            if (customBgUrl && !isPerformanceMode) { 
+                customBgOverlay.style.backgroundImage = `url('${customBgUrl}')`; 
+                customBgOverlay.style.opacity = '0.4'; 
+            } else { 
+                customBgOverlay.style.opacity = '0'; 
+            }
         }
 
         window.toggleMinimize = function() {
@@ -406,7 +443,7 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
             }
             if (tabId === 'home') renderHome();
             else if (tabId === 'game') {
-                gameSearchQuery = ''; // Reset search on tab enter
+                gameSearchQuery = ''; 
                 renderGamesMenu();
             }
             else if (tabId === 'settings') renderSettings();
@@ -470,11 +507,10 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
                         <input type="text" placeholder="SEARCH LIBRARY..." oninput="updateGameSearch(this.value)" class="w-full bg-white/5 border border-white/5 rounded-lg p-2 text-[10px] outline-none focus:border-accent text-zinc-200 placeholder:text-zinc-600 font-bold uppercase tracking-wider">
                     </div>
                     <div id="game-grid-container" class="grid grid-cols-2 gap-3 pb-4 overflow-y-auto custom-scrollbar flex-grow pr-1">
-                        <!-- Grid items loaded by updateGameSearch -->
                     </div>
                 </div>
             `;
-            updateGameSearch(''); // Initial load
+            updateGameSearch('');
         }
 
         window.switchNetworkTab = function(sub) {
@@ -660,6 +696,24 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
                                 <div class="absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-all ${isDarkMode ? 'translate-x-5' : ''}"></div>
                             </button>
                         </div>
+                        <div class="flex justify-between items-center bg-white/5 p-3 rounded-lg">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-zinc-400 uppercase font-bold">Glass UI</span>
+                                <span class="text-[8px] text-zinc-600 uppercase font-mono">72% Translucent Panels</span>
+                            </div>
+                            <button onclick="toggleGlass()" class="w-10 h-5 rounded-full relative transition-colors ${isGlassEnabled ? 'bg-accent' : 'bg-zinc-700'}">
+                                <div class="absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-all ${isGlassEnabled ? 'translate-x-5' : ''}"></div>
+                            </button>
+                        </div>
+                        <div class="flex justify-between items-center bg-white/5 p-3 rounded-lg">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-zinc-400 uppercase font-bold">Performance Mode</span>
+                                <span class="text-[8px] text-zinc-600 uppercase font-mono">Disables UI VFX</span>
+                            </div>
+                            <button onclick="togglePerformance()" class="w-10 h-5 rounded-full relative transition-colors ${isPerformanceMode ? 'bg-accent' : 'bg-zinc-700'}">
+                                <div class="absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-all ${isPerformanceMode ? 'translate-x-5' : ''}"></div>
+                            </button>
+                        </div>
                         <div class="flex flex-col bg-white/5 p-3 rounded-lg gap-2">
                             <div class="flex justify-between items-center"><span class="text-[10px] text-zinc-400 uppercase font-bold">Scale</span><span class="text-[10px] text-accent font-mono">${Math.round(panelScale * 100)}%</span></div>
                             <input type="range" min="0.5" max="1.5" step="0.05" value="${panelScale}" oninput="updateScale(this.value)" class="w-full">
@@ -670,8 +724,8 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
                         </div>
                         <div class="flex flex-col bg-white/5 p-3 rounded-lg gap-2">
                             <span class="text-[10px] text-zinc-400 uppercase font-bold">Tab Cloaking</span>
-                            <input type="text" placeholder="Tab Title (e.g., Google)" value="${cloakTitle}" onchange="updateCloakTitle(this.value)" class="w-full bg-transparent border-b border-white/10 text-[10px] py-1 outline-none mb-1 text-white">
-                            <input type="text" placeholder="Favicon URL (e.g., https://google.com/favicon.ico)" value="${cloakIcon}" onchange="updateCloakIcon(this.value)" class="w-full bg-transparent border-b border-white/10 text-[10px] py-1 outline-none text-white">
+                            <input type="text" placeholder="Tab Title" value="${cloakTitle}" onchange="updateCloakTitle(this.value)" class="w-full bg-transparent border-b border-white/10 text-[10px] py-1 outline-none mb-1 text-white">
+                            <input type="text" placeholder="Favicon URL" value="${cloakIcon}" onchange="updateCloakIcon(this.value)" class="w-full bg-transparent border-b border-white/10 text-[10px] py-1 outline-none text-white">
                         </div>
                         <div class="grid grid-cols-2 gap-2 mt-2">
                             <button onclick="downloadStorage()" class="p-2 bg-white/5 rounded-lg text-[9px] font-bold uppercase border border-white/10 hover:bg-white/10 transition-all">Backup</button>
@@ -684,6 +738,8 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
         }
 
         window.toggleTheme = function() { isDarkMode = !isDarkMode; localStorage.setItem('pro_theme', isDarkMode ? 'dark' : 'light'); applySettings(); syncSettingsToCloud(); renderSettings(); }
+        window.togglePerformance = function() { isPerformanceMode = !isPerformanceMode; localStorage.setItem('pro_perf', isPerformanceMode); applySettings(); syncSettingsToCloud(); renderSettings(); }
+        window.toggleGlass = function() { isGlassEnabled = !isGlassEnabled; localStorage.setItem('pro_glass', isGlassEnabled); applySettings(); syncSettingsToCloud(); renderSettings(); }
         window.updateScale = function(val) { panelScale = val; localStorage.setItem('pro_panel_scale', val); applySettings(); syncSettingsToCloud(); renderSettings(); }
         window.updateAccent = function(val) { accentColor = val; localStorage.setItem('pro_accent', val); applySettings(); syncSettingsToCloud(); renderSettings(); }
         window.updateProfileName = function(val) { profileName = val || 'Operator'; localStorage.setItem('pro_name', profileName); syncSettingsToCloud(); renderSettings(); }
@@ -741,8 +797,10 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
         window.panicAndRedirect = function() { window.location.href = panicUrl; }
         window.signOutUser = async function() { await signOut(auth); location.reload(); }
 
-        updateClock(); setInterval(updateClock, 1000);
-        applySettings(); switchTab('home');
+        updateClock(); 
+        if (!isPerformanceMode) clockInterval = setInterval(updateClock, 1000);
+        applySettings(); 
+        switchTab('home');
     </script>
 </body>
 </html>
