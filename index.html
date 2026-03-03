@@ -86,6 +86,9 @@
 </head>
 <body class="bg-black text-white h-screen w-full overflow-hidden p-6 relative flex flex-col" id="body">
 
+    <!-- Blackout Screen (Hidden by default) -->
+    <div id="blackout-screen" class="fixed inset-0 bg-black z-[99999] hidden pointer-events-none"></div>
+
     <!-- Background Layer -->
     <main class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         <img src="bg.png" id="bg-img" alt="" class="w-full h-full object-cover opacity-30 transition-opacity duration-1000">
@@ -146,6 +149,9 @@
             <button onclick="closeActiveGame()" class="bg-accent flex-grow h-12 rounded-xl flex items-center justify-center hover:brightness-110 transition-all shadow-lg active:scale-95" title="Close Game">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
+            <button onclick="openGameInNewTab()" class="bg-accent flex-grow h-12 rounded-xl flex items-center justify-center hover:brightness-110 transition-all shadow-lg active:scale-95" title="Open in New Tab">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </button>
             <button onclick="handleReload()" class="bg-accent flex-grow h-12 rounded-xl flex items-center justify-center hover:brightness-110 transition-all shadow-lg active:scale-95" title="Reload Game">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>
             </button>
@@ -185,6 +191,16 @@
         window.onbeforeunload = function() {
             return "Are you sure you want to exit Procyon OS?";
         };
+
+        // Visibility Blur (Blackout) Logic
+        document.addEventListener("visibilitychange", () => {
+            const blackout = document.getElementById("blackout-screen");
+            if (document.visibilityState === "hidden") {
+                blackout.classList.remove("hidden");
+            } else {
+                blackout.classList.add("hidden");
+            }
+        });
 
 // Global State
 const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "9007199254740992", "AgesOfConflict",
@@ -230,6 +246,8 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
         let profileName = localStorage.getItem('pro_name') || 'Operator';
         let friendCode = localStorage.getItem('pro_friend_code') || '';
         let accentColor = localStorage.getItem('pro_accent') || '#ff4d4d';
+        let cloakTitle = localStorage.getItem('pro_cloak_title') || 'Procyon OS';
+        let cloakIcon = localStorage.getItem('pro_cloak_icon') || '';
         let currentUser = null;
         let currentActivity = 'Idle';
         
@@ -240,6 +258,21 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
         let activeDM = null;
         let chatMessages = [];
         let chatUnsubscribe = null;
+
+        // Apply Cloaking
+        window.applyCloak = function() {
+            document.title = cloakTitle || 'Procyon OS';
+            if (cloakIcon) {
+                let link = document.querySelector("link[rel~='icon']");
+                if (!link) {
+                    link = document.createElement('link');
+                    link.rel = 'icon';
+                    document.head.appendChild(link);
+                }
+                link.href = cloakIcon;
+            }
+        }
+        applyCloak(); // Initial call
 
         // Auth Logic
         onAuthStateChanged(auth, async (user) => {
@@ -261,11 +294,14 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
                     if (data.name && !user.displayName) profileName = data.name;
                     if (data.friendCode) friendCode = data.friendCode;
                     if (data.accent) accentColor = data.accent;
+                    if (data.cloakTitle !== undefined) cloakTitle = data.cloakTitle;
+                    if (data.cloakIcon !== undefined) cloakIcon = data.cloakIcon;
                 }
                 
                 if (user.displayName) profileName = user.displayName;
 
                 applySettings();
+                applyCloak();
                 setupPresence();
                 setupFriendsListener();
                 if (activeTabId === 'profile') renderProfile();
@@ -319,7 +355,9 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
                 bg: customBgUrl,
                 name: profileName,
                 friendCode,
-                accent: accentColor
+                accent: accentColor,
+                cloakTitle,
+                cloakIcon
             }, { merge: true });
         }
 
@@ -598,7 +636,7 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
                     <div class="flex flex-col gap-3 pb-4">
                         <div class="flex flex-col bg-white/5 p-3 rounded-lg gap-2">
                             <span class="text-[10px] text-zinc-400 uppercase font-bold">Identity</span>
-                            <input type="text" value="${profileName}" onchange="updateProfileName(this.value)" class="w-full bg-transparent border-b border-white/10 text-[10px] py-1 outline-none">
+                            <input type="text" value="${profileName}" onchange="updateProfileName(this.value)" class="w-full bg-transparent border-b border-white/10 text-[10px] py-1 outline-none text-white">
                         </div>
                         <div class="flex justify-between items-center bg-white/5 p-3 rounded-lg">
                             <span class="text-[10px] text-zinc-400 uppercase font-bold">Dark Mode</span>
@@ -614,6 +652,11 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
                              <div class="flex justify-between items-center"><span class="text-[10px] text-zinc-400 uppercase font-bold">Color Core</span><div class="w-4 h-4 rounded-full border border-white/20" style="background:${accentColor}"></div></div>
                             <input type="color" value="${accentColor}" onchange="updateAccent(this.value)" class="w-full h-8 bg-transparent border-none cursor-pointer">
                         </div>
+                        <div class="flex flex-col bg-white/5 p-3 rounded-lg gap-2">
+                            <span class="text-[10px] text-zinc-400 uppercase font-bold">Tab Cloaking</span>
+                            <input type="text" placeholder="Tab Title (e.g., Google)" value="${cloakTitle}" onchange="updateCloakTitle(this.value)" class="w-full bg-transparent border-b border-white/10 text-[10px] py-1 outline-none mb-1 text-white">
+                            <input type="text" placeholder="Favicon URL (e.g., https://google.com/favicon.ico)" value="${cloakIcon}" onchange="updateCloakIcon(this.value)" class="w-full bg-transparent border-b border-white/10 text-[10px] py-1 outline-none text-white">
+                        </div>
                         <div class="grid grid-cols-2 gap-2 mt-2">
                             <button onclick="downloadStorage()" class="p-2 bg-white/5 rounded-lg text-[9px] font-bold uppercase border border-white/10 hover:bg-white/10 transition-all">Backup</button>
                             <button onclick="document.getElementById('upload-storage-input').click()" class="p-2 bg-white/5 rounded-lg text-[9px] font-bold uppercase border border-white/10 hover:bg-white/10 transition-all">Restore</button>
@@ -628,7 +671,9 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
         window.updateScale = function(val) { panelScale = val; localStorage.setItem('pro_panel_scale', val); applySettings(); syncSettingsToCloud(); renderSettings(); }
         window.updateAccent = function(val) { accentColor = val; localStorage.setItem('pro_accent', val); applySettings(); syncSettingsToCloud(); renderSettings(); }
         window.updateProfileName = function(val) { profileName = val || 'Operator'; localStorage.setItem('pro_name', profileName); syncSettingsToCloud(); renderSettings(); }
-        
+        window.updateCloakTitle = function(val) { cloakTitle = val; localStorage.setItem('pro_cloak_title', val); applyCloak(); syncSettingsToCloud(); }
+        window.updateCloakIcon = function(val) { cloakIcon = val; localStorage.setItem('pro_cloak_icon', val); applyCloak(); syncSettingsToCloud(); }
+
         window.downloadStorage = function() {
             const data = JSON.stringify(localStorage);
             const blob = new Blob([data], { type: 'application/json' });
@@ -661,6 +706,12 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
             currentActivity = `Playing ${game}`;
             setupPresence();
             if (!isMinimized) toggleMinimize();
+        }
+        window.openGameInNewTab = function() {
+            const ifr = document.getElementById('current-game-iframe');
+            if (ifr && ifr.src) {
+                window.open(ifr.src, '_blank');
+            }
         }
         window.closeActiveGame = function() { document.getElementById('game-layer').innerHTML = ''; currentActivity = 'Idle'; setupPresence(); }
         window.handleReload = function() { const ifr = document.getElementById('current-game-iframe'); if (ifr) ifr.src = ifr.src; else switchTab(activeTabId); }
