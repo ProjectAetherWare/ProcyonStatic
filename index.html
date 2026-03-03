@@ -258,6 +258,7 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
         let activeDM = null;
         let chatMessages = [];
         let chatUnsubscribe = null;
+        let gameSearchQuery = '';
 
         // Apply Cloaking
         window.applyCloak = function() {
@@ -404,7 +405,10 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
                 activeBtn.classList.replace('text-zinc-400', 'text-white');
             }
             if (tabId === 'home') renderHome();
-            else if (tabId === 'game') renderGamesMenu();
+            else if (tabId === 'game') {
+                gameSearchQuery = ''; // Reset search on tab enter
+                renderGamesMenu();
+            }
             else if (tabId === 'settings') renderSettings();
             else if (tabId === 'friends') renderFriends();
             else if (tabId === 'profile') renderProfile();
@@ -434,31 +438,43 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
             `;
         }
 
+        window.updateGameSearch = function(query) {
+            gameSearchQuery = query.toLowerCase().trim();
+            const grid = document.getElementById('game-grid-container');
+            if (grid) {
+                const filtered = GAMES.filter(g => g.toLowerCase().includes(gameSearchQuery));
+                grid.innerHTML = filtered.length ? filtered.map(game => {
+                    const isFav = favorites.includes(game);
+                    return `
+                        <div class="flex flex-col items-center relative group">
+                            <button onclick="toggleFavorite('${game}')" class="absolute top-1 right-1 z-20 p-1 bg-black/60 rounded-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="${isFav ? 'var(--accent)' : 'none'}" stroke="${isFav ? 'var(--accent)' : 'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                            </button>
+                            <button onclick="launchGame('${game}')" class="flex flex-col items-center w-full">
+                                <div class="w-16 h-16 bg-zinc-800 rounded-2xl overflow-hidden border border-white/5 group-hover:border-[var(--accent)]/50 flex items-center justify-center">
+                                    <img src="/classes/${game}/icon.png" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\\'text-lg font-black text-zinc-700\\'>${game[0].toUpperCase()}</span>'">
+                                </div>
+                                <span class="text-[10px] mt-2 text-zinc-400 font-bold uppercase truncate w-full text-center px-1">${game}</span>
+                            </button>
+                        </div>
+                    `;
+                }).join('') : '<div class="col-span-2 py-8 text-center text-zinc-600 text-[10px] uppercase font-bold italic">No results found</div>';
+            }
+        }
+
         function renderGamesMenu() {
             const dynamicContent = document.getElementById('dynamic-content');
             dynamicContent.innerHTML = `
-                <div class="w-full h-full p-2 custom-scrollbar overflow-y-auto">
-                    <h3 class="text-zinc-400 text-[11px] uppercase tracking-widest font-bold mb-4 border-b border-white/5 pb-2">Central Library</h3>
-                    <div class="grid grid-cols-2 gap-3 pb-4">
-                        ${GAMES.map(game => {
-                            const isFav = favorites.includes(game);
-                            return `
-                                <div class="flex flex-col items-center relative group">
-                                    <button onclick="toggleFavorite('${game}')" class="absolute top-1 right-1 z-20 p-1 bg-black/60 rounded-full">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="${isFav ? 'var(--accent)' : 'none'}" stroke="${isFav ? 'var(--accent)' : 'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                                    </button>
-                                    <button onclick="launchGame('${game}')" class="flex flex-col items-center w-full">
-                                        <div class="w-16 h-16 bg-zinc-800 rounded-2xl overflow-hidden border border-white/5 group-hover:border-[var(--accent)]/50 flex items-center justify-center">
-                                            <img src="/classes/${game}/icon.png" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\\'text-lg font-black text-zinc-700\\'>${game[0].toUpperCase()}</span>'">
-                                        </div>
-                                        <span class="text-[10px] mt-2 text-zinc-400 font-bold uppercase truncate w-full text-center px-1">${game}</span>
-                                    </button>
-                                </div>
-                            `;
-                        }).join('')}
+                <div class="w-full h-full p-2 flex flex-col">
+                    <div class="mb-3">
+                        <input type="text" placeholder="SEARCH LIBRARY..." oninput="updateGameSearch(this.value)" class="w-full bg-white/5 border border-white/5 rounded-lg p-2 text-[10px] outline-none focus:border-accent text-zinc-200 placeholder:text-zinc-600 font-bold uppercase tracking-wider">
+                    </div>
+                    <div id="game-grid-container" class="grid grid-cols-2 gap-3 pb-4 overflow-y-auto custom-scrollbar flex-grow pr-1">
+                        <!-- Grid items loaded by updateGameSearch -->
                     </div>
                 </div>
             `;
+            updateGameSearch(''); // Initial load
         }
 
         window.switchNetworkTab = function(sub) {
@@ -720,7 +736,7 @@ const GAMES = ["1", "12.2", "1v1lol", "1v1space", "2048", "8ball", "900719925474
             else favorites.push(game);
             localStorage.setItem('pro_favorites', JSON.stringify(favorites));
             syncSettingsToCloud();
-            renderGamesMenu();
+            if (activeTabId === 'game') updateGameSearch(gameSearchQuery);
         }
         window.panicAndRedirect = function() { window.location.href = panicUrl; }
         window.signOutUser = async function() { await signOut(auth); location.reload(); }
